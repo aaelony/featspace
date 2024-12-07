@@ -31,3 +31,5 @@ test: ## Run the tests
 doc: ## Compile documentation
 	cargo doc
 
+view_docs: doc
+	open target/doc/featspace/index.html

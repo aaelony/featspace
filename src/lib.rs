@@ -1,25 +1,65 @@
+//! Utilities for sets of features.
+
 use digest::Digest;
 use sha2::Sha256;
 
-struct ColSet {
-    feature_vector: Vec<String>,
-    colset_hash: String,
-    nickname: String,
+#[derive(Debug)]
+pub struct ColSet {
+    pub feature_vector: Vec<String>,
+    pub colset_hash: String,
+    pub nickname: String,
 }
 
-/// Takes an owned vector of strings and returns a hash string of the sorted, deduplicated list
+pub struct ColSetContainer {
+    pub contents: Vec<ColSet>,
+}
+
+/// Get a string hash that uniquely identifies a set of feature names.
+/// Takes an owned vector of strings and returns a hash string of the sorted, dmake eduplicated list
+/// Example:
+/// ```
+/// use featspace::hash_colset;
+/// let colset1: Vec<String> = ["foo", "bar", "baz"]
+///    .iter()
+///    .map(|&s| s.to_string())
+///    .collect();
+/// let colset1_hash = hash_colset(&colset1.to_vec());
+/// ```
+///
 pub fn hash_colset(strings: &Vec<String>) -> String {
     let mut unique_strings = strings.clone();
     unique_strings.sort();
     unique_strings.dedup();
-
     let joined = unique_strings.join("");
-
     let hash = Sha256::new().chain_update(joined.as_bytes()).finalize();
     format!("{:x}", hash)
 }
 
-fn identical_colset_hash(colset1: &ColSet, colset2: &ColSet) -> bool {
+/// Create a new colset by adding a new feature string.
+/// Example:
+/// ```
+/// use featspace::{ColSet,add_one_to_colset};
+/// let colset1: Vec<String> = ["foo", "bar", "baz"]
+///    .iter()
+///    .map(|&s| s.to_string())
+///    .collect();
+/// let orig_colset = ColSet::new(colset1);
+/// let new_feature = "qux".to_string();
+/// let new_colset = add_one_to_colset(&orig_colset, &new_feature);
+/// println!("{:?}", new_colset);
+///
+/// ```
+pub fn add_one_to_colset(parent: &ColSet, new_feature: &String) -> ColSet {
+    let mut new_feature_vector = parent.feature_vector.clone();
+    new_feature_vector.push(new_feature.clone());
+    let new_colset = ColSet::new(new_feature_vector.clone());
+    new_colset
+}
+
+// subtract_one
+
+/// Test 2 if ColSet objects have the same string hash
+pub fn identical_colset_hash(colset1: &ColSet, colset2: &ColSet) -> bool {
     colset1.colset_hash == colset2.colset_hash
 }
 
@@ -27,7 +67,7 @@ fn identical_colset_hash(colset1: &ColSet, colset2: &ColSet) -> bool {
 /// Takes a feature_vector and an optional nickname.
 /// If the nickname is not given, the last 6 characters of the resulting `colset_hash` will be used as the `nickname`.
 impl ColSet {
-    fn new(feature_vector: Vec<String>) -> Self {
+    pub fn new(feature_vector: Vec<String>) -> Self {
         let colset_hash = hash_colset(&feature_vector);
         let nickname = colset_hash[colset_hash.len() - 6..].to_string();
 
@@ -38,7 +78,7 @@ impl ColSet {
         }
     }
 
-    fn new_with_nickname(feature_vector: Vec<String>, nickname: String) -> Self {
+    pub fn new_with_nickname(feature_vector: Vec<String>, nickname: String) -> Self {
         let colset_hash: String = hash_colset(&feature_vector);
 
         ColSet {
@@ -48,15 +88,10 @@ impl ColSet {
         }
     }
 
-    fn get_nickname(&self) -> &String {
+    pub fn get_nickname(&self) -> &String {
         &self.nickname
     }
 }
-
-// get_hashname
-// hash_colset
-// add_one
-// subtract_one
 
 #[cfg(test)]
 mod tests {
