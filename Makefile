@@ -28,8 +28,17 @@ bump: ## Bump the version number
 test: ## Run the tests
 	cargo test
 
+only_integration_tests: ## Only run integration tests
+	cargo test --test '*'
+
 doc: ## Compile documentation
 	cargo doc
 
 viewdocs: doc ## View documentation
 	open target/doc/featspace/index.html
+
+coverage:  ## Compute Test Coverage
+	cargo tarpaulin --out xml
+
+
+all: fmt lint test build coverage
